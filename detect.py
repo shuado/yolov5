@@ -35,6 +35,10 @@ import platform # 获取操作系统信息
 import sys # 系统路径管理
 from pathlib import Path # 路径管理
 
+
+import torch
+
+
 # from utils.event_triggers import trigger_events
 
 import torch # 深度学习框架
@@ -150,6 +154,17 @@ def run(
         run(source='data/videos/example.mp4', weights='yolov5s.pt', conf_thres=0.4, device='0')
         ```
     """
+    
+      # ==================== 添加 Metal 设备检查 ==================== 
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+        LOGGER.info(f"🚀 Metal Acceleration (MPS) Enabled")
+    else:
+        device = torch.device("cpu")
+        LOGGER.warning("Metal acceleration not available, using CPU")
+    # ==================== 修改结束 ====================
+    
+    
     # 将source转换为字符串
     source = str(source)
     # 确定是否保存推理图像
@@ -172,6 +187,9 @@ def run(
     # Load model 加载模型
     device = select_device(device)
     model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
+    model = model.to(device)  # 🚨 关键修改：强制模型加载到 Metal 设备
+        
+
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size 检查图像尺寸
 
@@ -192,7 +210,8 @@ def run(
     seen, windows, dt = 0, [], (Profile(device=device), Profile(device=device), Profile(device=device)) # 已处理图像数、窗口列表、时间测量器
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
-            im = torch.from_numpy(im).to(model.device) # 将numpy数组转换为torch张量并移动到模型设备
+            im = torch.from_numpy(im).to(device)  # 🚨 数据传送到 Metal
+            # im = torch.from_numpy(im).to(model.device) # 将numpy数组转换为torch张量并移动到模型设备
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32 将uint8转换为fp16/32
             im /= 255  # 0 - 255 to 0.0 - 1.0 归一化到0.0-1.0
             if len(im.shape) == 3:
