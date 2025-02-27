@@ -190,6 +190,7 @@ def run(
     model = model.to(device)  # 🚨 关键修改：强制模型加载到 Metal 设备
         
 
+
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size 检查图像尺寸
 
