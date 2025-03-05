@@ -36,11 +36,9 @@ import sys # 系统路径管理
 from pathlib import Path # 路径管理
 
 
-import torch
 
 
 # from utils.event_triggers import trigger_events
-
 import torch # 深度学习框架
 
 FILE = Path(__file__).resolve() # 获取当前文件的绝对路径
